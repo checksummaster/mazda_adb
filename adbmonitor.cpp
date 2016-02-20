@@ -55,13 +55,15 @@ int checkconnect()
     while ((readn = fread(buf, 1, sizeof(buf), handle)) > 0)
     {
         buf[readn] = '\0';
-        if (strstr(buf, "tcp:2222 tcp:22") != NULL)
+       /* if (strstr(buf, "tcp:2222 tcp:22") != NULL)
         {
             ret = 2;
-        }
+        } */
         if (strstr(buf, "device not found") != NULL)
         {
             ret = 0;
+        } else {
+            ret = 2;
         }
 
 
@@ -75,9 +77,12 @@ int checkconnect()
 }
 
 // Redirect port 22 to 2222 on android
-int redirect()
+int redirect(const char *command)
 {
-    FILE *handle = popen("adb reverse tcp:2222 tcp:22 2>&1", "r");
+    char commandline[1024];
+    sprintf (commandline,"adb %s",command);
+    printf ("Start : %s\n",commandline);
+    FILE *handle = popen(commandline, "r");
 
     if (handle == NULL)
     {
@@ -128,10 +133,13 @@ int wait()
 
 int main(int narg, char *arg[])
 {
+    const char *command = "reverse tcp:2222 tcp:22";
     if ( narg > 1 && !strcmp(arg[1], "-v") )
     {
-        printf("version 1.0\n");
+        printf("version 1.1\n");
         return 0;
+    } else if ( narg > 1 ) {
+        command = arg[1];
     }
     int v2 = -1;
 
@@ -157,7 +165,7 @@ int main(int narg, char *arg[])
                 break;
             case 1:
                 if ( v2 != v ) printf("device without redirection\n");
-                redirect();
+                redirect(command);
                 break;
             case 2:
                 if ( v2 != v ) printf("device with redirection\n");
